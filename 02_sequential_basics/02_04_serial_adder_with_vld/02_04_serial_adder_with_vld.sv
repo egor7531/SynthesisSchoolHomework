@@ -12,7 +12,21 @@ module serial_adder_with_vld
   input  last,
   output sum
 );
+  reg carry; 
 
+  assign sum = a ^ b ^ carry; 
+
+  always @(posedge clk or posedge rst) begin
+    if (rst) begin
+      carry <= 0;
+    end else if (vld) begin
+      carry <= (a & b) | (carry & (a ^ b)); 
+      if (last) begin
+        carry <= 0;
+      end
+    end
+  end
+  
   // Task:
   // Implement a module that performs serial addition of two numbers
   // (one pair of bits is summed per clock cycle).

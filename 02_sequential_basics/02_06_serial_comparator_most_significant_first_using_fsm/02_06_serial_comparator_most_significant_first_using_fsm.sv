@@ -27,17 +27,12 @@ module serial_comparator_least_significant_first_using_fsm
   begin
     new_state = state;
 
-    // This lint warning is bogus because we assign the default value above
-    // verilator lint_off CASEINCOMPLETE
-
     case (state)
       st_equal       : if (~ a &   b) new_state = st_a_less_b;
                   else if (  a & ~ b) new_state = st_a_greater_b;
       st_a_less_b    : if (  a & ~ b) new_state = st_a_greater_b;
       st_a_greater_b : if (~ a &   b) new_state = st_a_less_b;
     endcase
-
-    // verilator lint_on  CASEINCOMPLETE
   end
 
   // Output logic
@@ -68,10 +63,29 @@ module serial_comparator_most_significant_first_using_fsm
   output a_greater_b
 );
 
-  // Task:
-  // Implement a serial comparator module similar to the previus exercise
-  // but use the Finite State Machine to evaluate the result.
-  // Most significant bits arrive first.
+parameter [1:0] s0_eq = 2'b00, s1_less = 2'b01, s2_great = 2'b10;
+reg[1:0] state, next_state;
 
+always_comb
+begin
+  next_state = state;
+
+  case (state)
+	  s0_eq         : if (~ a &   b)  next_state = s1_less;
+				      else	if (  a & ~ b)  next_state = s2_great;
+	  s1_less       : if (  a & ~ b)  next_state = s1_less;
+	  s2_great      : if (~ a &   b)  next_state = s2_great;
+  endcase
+end
+
+assign a_eq_b      = (a == b) & state == s0_eq;
+assign a_less_b    = (state == s1_less)  | (state == s0_eq & (~ a & b));
+assign a_greater_b = (state == s2_great) | (state == s0_eq & (a & ~ b));
+
+always @ (posedge clk)
+  if(rst)
+    state <= s0_eq;
+  else
+    state <= next_state;
 
 endmodule

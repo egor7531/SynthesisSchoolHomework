@@ -39,14 +39,30 @@ endmodule
 
 module serial_comparator_most_significant_first
 (
-  input  clk,
-  input  rst,
-  input  a,
-  input  b,
-  output a_less_b,
-  output a_eq_b,
-  output a_greater_b
+  input  logic clk,
+  input  logic rst,
+  input  logic a,
+  input  logic b,
+  output logic a_less_b,
+  output logic a_eq_b,
+  output logic a_greater_b
 );
+  logic prev_a_eq_b, prev_a_less_b;
+
+  assign a_eq_b = (a == b) & prev_a_eq_b;
+  assign a_less_b = prev_a_less_b | ((~a & b) & (prev_a_eq_b));
+  assign a_greater_b = (~a_eq_b) & (~a_less_b);
+
+  always_ff @(posedge clk or posedge rst) begin
+    if (rst) begin
+      prev_a_eq_b   <= 1'b1; 
+      prev_a_less_b <= 1'b0;  
+    end else begin
+      prev_a_eq_b   <= a_eq_b; 
+      prev_a_less_b <= a_less_b; 
+    end
+  end
+
 
   // Task:
   // Implement a module that compares two numbers in a serial manner.
@@ -60,3 +76,4 @@ module serial_comparator_most_significant_first
 
 
 endmodule
+
